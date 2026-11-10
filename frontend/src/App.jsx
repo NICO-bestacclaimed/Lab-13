@@ -3,7 +3,7 @@ import CatalogoPage from '@/pages/CatalogoPage'
 
 export default function App() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-amber-50">
       <Header />
       <CatalogoPage />
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
