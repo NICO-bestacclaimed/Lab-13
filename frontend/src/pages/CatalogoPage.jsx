@@ -1,16 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { AlertCircle } from 'lucide-react'
 
 import CategoryFilter from '@/components/CategoryFilter'
 import ProductList from '@/components/ProductList'
-import { categoriasSimuladas, productosSimulados } from '@/data/productosSimulados'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { obtenerCategorias, obtenerProductos } from '@/services/api'
 
 export default function CatalogoPage() {
+  const [productos, setProductos] = useState([])
+  const [categorias, setCategorias] = useState([])
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null)
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    Promise.all([obtenerProductos(), obtenerCategorias()])
+      .then(([datosProductos, datosCategorias]) => {
+        setProductos(datosProductos)
+        setCategorias(datosCategorias)
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setCargando(false))
+  }, [])
 
   const productosFiltrados =
     categoriaSeleccionada === null
-      ? productosSimulados
-      : productosSimulados.filter((p) => p.categoria === categoriaSeleccionada)
+      ? productos
+      : productos.filter((p) => p.categoria === categoriaSeleccionada)
 
   return (
     <main id="catalogo" className="mx-auto max-w-6xl space-y-6 px-4 py-8">
@@ -19,12 +35,26 @@ export default function CatalogoPage() {
         <p className="text-muted-foreground">Elige una categoría para explorar los libros disponibles.</p>
       </section>
 
-      <CategoryFilter
-        categorias={categoriasSimuladas}
-        seleccionada={categoriaSeleccionada}
-        onSeleccionar={setCategoriaSeleccionada}
-      />
-      <ProductList productos={productosFiltrados} />
+      {cargando && <p className="py-10 text-center">Cargando catálogo...</p>}
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>No se pudo cargar el catálogo</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {!cargando && !error && (
+        <>
+          <CategoryFilter
+            categorias={categorias}
+            seleccionada={categoriaSeleccionada}
+            onSeleccionar={setCategoriaSeleccionada}
+          />
+          <ProductList productos={productosFiltrados} />
+        </>
+      )}
     </main>
   )
 }
